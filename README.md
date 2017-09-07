@@ -9,6 +9,8 @@ pip install install bs4
 Start running 
 
 python demo.py username, password
-
+python demo.py -h for help
 
 Email: info@pythonvietnam.info
+
+if you can not open firefox as web driver, go check geckodriver, download and install it
