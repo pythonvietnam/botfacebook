@@ -11,4 +11,4 @@ Start running
 python demo.py username, password
 
 
-Email: khanhnn@pythonvietnam.info
+Email: info@pythonvietnam.info
