@@ -9,6 +9,7 @@ pip install install bs4
 Start running 
 
 python demo.py username, password
+
 python demo.py -h for help
 
 Email: info@pythonvietnam.info
