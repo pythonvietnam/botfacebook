@@ -5,7 +5,6 @@ from selenium import webdriver
 
 
 def login(driver):
-    global token
     driver.get('https://www.facebook.com/')
 
     driver.find_element_by_id("email").send_keys(config.USERNAME)
@@ -24,7 +23,7 @@ def check_hashtag(text):
 
 
 def pending_posts(driver):
-    driver.get('https://www.facebook.com/groups/1772673526354548/pending/')
+    driver.get(config.GROUP_URL+'pending/')
 
     pendings = driver.find_elements_by_class_name('fbUserPost')
     approves = driver.find_elements_by_xpath("//a[starts-with(@ajaxify,'/ajax/groups/mall/approve.php?')]")
@@ -41,7 +40,7 @@ def pending_posts(driver):
 
 
 def pending_members(driver):
-    driver.get('https://www.facebook.com/groups/1772673526354548/requests/')
+    driver.get(config.GROUP_URL+'requests/')
     time.sleep(3)
     driver.find_element_by_name('approve_all').click()
     time.sleep(3)
