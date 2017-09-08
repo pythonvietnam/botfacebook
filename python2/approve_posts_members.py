@@ -1,6 +1,6 @@
 # -*- coding:utf8 -*-
 # author: ThangDX
-
+import schedule
 import config
 import time
 import re
@@ -44,9 +44,15 @@ def pending_posts(driver):
         else:
             members_warning_hashtag.append(pendings[index].find_elements_by_tag_name('a')[3].get_attribute('href').split('?')[0])
     members_warning_hashtag = list(set(members_warning_hashtag))
-    print members_warning_hashtag
+    #print members_warning_hashtag
     driver.get('https://www.messenger.com/')
-    driver.find_element_by_tag_name('button').click()
+    try:
+        driver.find_element_by_tag_name('button').click()
+    except:
+        driver.find_element_by_id("email").send_keys(config.USERNAME)
+        driver.find_element_by_id("pass").send_keys(config.PASSWORD)
+        driver.find_element_by_id("loginbutton").click()
+        time.sleep(1)
     for member in members_warning_hashtag:
         driver.get(member.replace('www.facebook.com', 'www.messenger.com/t'))
         time.sleep(3)
@@ -68,10 +74,13 @@ def main():
 
     driver = webdriver.Chrome(chrome_options=options)
     login(driver)
-    #pending_members(driver)
+    pending_members(driver)
     pending_posts(driver)
+    #raw_input("Input: ")
+    driver.close()
 
-
-    raw_input("Input: ")
-
-main()
+#main()
+schedule.every(3).minutes.do(main)
+while True:
+    schedule.run_pending()
+    time.sleep(1)
