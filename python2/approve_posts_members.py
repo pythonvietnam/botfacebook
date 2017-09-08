@@ -47,12 +47,13 @@ def pending_posts(driver):
     #print members_warning_hashtag
     driver.get('https://www.messenger.com/')
     try:
-        driver.find_element_by_tag_name('button').click()
-    except:
         driver.find_element_by_id("email").send_keys(config.USERNAME)
         driver.find_element_by_id("pass").send_keys(config.PASSWORD)
         driver.find_element_by_id("loginbutton").click()
         time.sleep(1)
+    except:
+        driver.find_element_by_tag_name('button').click()
+
     for member in members_warning_hashtag:
         driver.get(member.replace('www.facebook.com', 'www.messenger.com/t'))
         time.sleep(3)
