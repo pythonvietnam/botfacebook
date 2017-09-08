@@ -1,7 +1,7 @@
 
 
-USERNAME = 'doxuanthangvn'
-PASSWORD = '3,141592653'
+USERNAME = ''
+PASSWORD = ''
 
 #WARNING_WORDS = map(lambda x: x.split('\n')[0], open('warning.txt').readlines())
 #DELETE_WORDS = map(lambda x: x.split('\n')[0], open('delete.txt').readlines())
