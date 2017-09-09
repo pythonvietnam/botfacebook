@@ -4,17 +4,24 @@ import schedule
 import config
 import time
 import re
+import requests
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
 
 
+token = 'EAACEdEose0cBAIyfZBRoaaM0NdDmJRZCXrZBUPQZBxZA5zTGdLT0qP1XuRJ85PfmBIUVQQ06AzqKIAYXjXuEPXkvyyjYcoYJExeXWmWib6VwX9lyEZBdavx5E9pPAhlJZBI3Vrm5qK3BfujPt4YaAXZA2oB4m9gjHYjHOkfNBBmEGw0OcgZCanqkIkfqbc1wXG4wZD'
+
 def login(driver):
+    global token
     driver.get('https://www.facebook.com/')
 
     driver.find_element_by_id("email").send_keys(config.USERNAME)
     driver.find_element_by_id("pass").send_keys(config.PASSWORD)
     driver.find_element_by_id("loginbutton").click()
     time.sleep(1)
+
+    driver.get('https://www.facebook.com/me')
+    token = driver.page_source.split('access_token:"')[1].split('",')[0]
 
 
 def check_hashtag(text):
@@ -46,6 +53,7 @@ def pending_posts(driver):
     members_warning_hashtag = list(set(members_warning_hashtag))
     #print members_warning_hashtag
     driver.get('https://www.messenger.com/')
+    time.sleep(3)
     try:
         driver.find_element_by_id("email").send_keys(config.USERNAME)
         driver.find_element_by_id("pass").send_keys(config.PASSWORD)
@@ -55,10 +63,13 @@ def pending_posts(driver):
         driver.find_element_by_tag_name('button').click()
 
     for member in members_warning_hashtag:
-        driver.get(member.replace('www.facebook.com', 'www.messenger.com/t'))
-        time.sleep(3)
-        driver.find_element_by_xpath("//div[@contenteditable='true']").send_keys(config.HASHTAGS_MESSAGE + Keys.ENTER)
-        time.sleep(3)
+        try:
+            driver.get(member.replace('www.facebook.com', 'www.messenger.com/t'))
+            time.sleep(3)
+            driver.find_element_by_xpath("//div[@contenteditable='true']").send_keys(config.HASHTAGS_MESSAGE + Keys.ENTER)
+            time.sleep(3)
+        except:
+            pass
 
 
 def pending_members(driver):
@@ -69,19 +80,75 @@ def pending_members(driver):
     driver.find_element_by_xpath("//button[@action='confirm']").click()
 
 
+def get_feed_ids(url=None):
+    global token
+    if url is None:
+        url = config.GRAPH_URL+'157091584481035/feed?fields=id&since='+str(int(time.time())-config.DAYS*3600*24)+'&access_token='+token
+    res = requests.get(url).json()
+
+    if len(res['data']) == 0:
+        return []
+    else:
+        return map(lambda x: x['id'],res['data'])+get_feed_ids(res['paging']['next'])
+
+def get_comments_of_feed(driver,feed_id, url=None):
+    global token
+    if url is None:
+        url = config.GRAPH_URL+feed_id+'?fields=comments'+'&access_token='+token
+    res = requests.get(url).json()['comments']
+    for data in res['data']:
+        for word in config.DELETE_WORDS:
+            if word in data['message']:# Delete comment
+                try:
+                    delete_comment(driver, data['id'].split('_')[-1])
+                except:
+                    pass
+
+
+def delete_comment(driver, comment_id):
+    driver.get(config.FACEBOOK_URL+comment_id)
+    comments = driver.find_elements_by_xpath("//div[starts-with(@id,'comment_js')]")
+    for comment in comments:
+        for word in config.DELETE_WORDS:
+            if word in comment.text:
+                comment.find_element_by_class_name('UFICommentCloseButton').click()
+                time.sleep(3)
+                #Xoa binh luan
+                driver.find_element_by_xpath("//a[@data-testid='ufi_comment_menu_delete']").click()
+                #Xoa binh luan va xoa thanh vien
+                #driver.find_element_by_xpath("//a[@data-testid='ufi_comment_menu_delete_comment_and_remove_commenter']").click()
+                time.sleep(3)
+                driver.find_element_by_xpath("//a[@data-testid='ufi_hide_dialog_delete_button']").click()
+                delete_comment(driver, comment_id)
+                print '===='
+    pass
+
+
+
 def main():
     options = webdriver.ChromeOptions()
     options.add_argument("--disable-notifications")
 
     driver = webdriver.Chrome(chrome_options=options)
+    #driver = webdriver.Firefox()
     login(driver)
-    pending_members(driver)
-    pending_posts(driver)
-    #raw_input("Input: ")
+    #pending_members(driver)
+    #pending_posts(driver)
+
+
+    get_comments_of_feed(driver,'157091584481035_707449366111918')
+    raw_input("Input: ")
     driver.close()
 
-#main()
-schedule.every(3).minutes.do(main)
-while True:
-    schedule.run_pending()
-    time.sleep(1)
+main()
+
+
+
+# for feed_id in get_feed_ids():
+#     get_comments_of_feed(feed_id)
+#     #break
+
+# schedule.every(3).minutes.do(main)
+# while True:
+#     schedule.run_pending()
+#     time.sleep(1)
