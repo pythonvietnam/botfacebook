@@ -136,7 +136,7 @@ def main():
     #pending_posts(driver)
 
     for feed_id in get_feed_ids():
-        get_comments_of_feed(feed_id)
+        get_comments_of_feed(driver,feed_id)
         #break
     #get_comments_of_feed(driver,'157091584481035_707449366111918')
     #raw_input("Input: ")
