@@ -112,7 +112,7 @@ def get_comments_of_feed(feed_id, url=None):
     try:
         for data in res['data']:
             for word in config.DELETE_WORDS:
-                if word in data['message']:# Delete comment
+                if word in data['message'].lower() or data['message'] == '.':# Delete comment
                     try:
                         delete_comment(data['id'].split('_')[-1])
                     except:
