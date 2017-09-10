@@ -127,7 +127,7 @@ def delete_comment(comment_id):
     comments = driver.find_elements_by_xpath("//div[starts-with(@id,'comment_js')]")
     for comment in comments:
         for word in config.DELETE_WORDS:
-            if word in comment.text:
+            if word in comment.text.lower() or comment.text == '.':
                 comment.find_element_by_class_name('UFICommentCloseButton').click()
                 time.sleep(3)
                 #Xoa binh luan
