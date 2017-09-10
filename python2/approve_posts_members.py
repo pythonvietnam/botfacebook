@@ -100,8 +100,7 @@ def get_feed_ids(url=None):
         else:
             return map(lambda x: x['id'],res['data'])+get_feed_ids(res['paging']['next'])
     except:
-        driver.get('https://www.facebook.com/me')
-        token = driver.page_source.split('access_token:"')[1].split('",')[0]
+        login()
 
 
 def get_comments_of_feed(feed_id, url=None):
