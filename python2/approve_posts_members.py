@@ -135,9 +135,11 @@ def main():
     #pending_members(driver)
     #pending_posts(driver)
 
-
-    get_comments_of_feed(driver,'157091584481035_707449366111918')
-    raw_input("Input: ")
+    for feed_id in get_feed_ids():
+        get_comments_of_feed(feed_id)
+        #break
+    #get_comments_of_feed(driver,'157091584481035_707449366111918')
+    #raw_input("Input: ")
     driver.close()
 
 main()
