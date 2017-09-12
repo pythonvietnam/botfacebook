@@ -7,7 +7,13 @@ import re
 import requests
 from selenium import webdriver
 from selenium.webdriver.common.keys import Keys
+from fbchat import Client
+from fbchat.models import *
 
+
+client = Client(config.USERNAME, config.PASSWORD)
+
+members_sent = []
 
 token = 'EAACEdEose0cBAIyfZBRoaaM0NdDmJRZCXrZBUPQZBxZA5zTGdLT0qP1XuRJ85PfmBIUVQQ06AzqKIAYXjXuEPXkvyyjYcoYJExeXWmWib6VwX9lyEZBdavx5E9pPAhlJZBI3Vrm5qK3BfujPt4YaAXZA2oB4m9gjHYjHOkfNBBmEGw0OcgZCanqkIkfqbc1wXG4wZD'
 options = webdriver.ChromeOptions()
@@ -16,8 +22,28 @@ options.add_argument("--disable-notifications")
 driver = webdriver.Chrome(chrome_options=options)
 
 
+def get_user_id(url):
+    return requests.get(url).text.split('"entity_id":"')[1].split('"}')[0]
+
+
+def get_token():
+    session = requests.session()
+    session.headers.update({
+        'User-Agent': 'Mozilla/5.0 (X11; Linux i686; rv:39.0) Gecko/20100101 Firefox/39.0'
+    })
+    response = session.get('https://m.facebook.com')
+    response = session.post('https://m.facebook.com/login.php', data={
+        'email': config.USERNAME,
+        'pass':  config.PASSWORD
+    }, allow_redirects=False)
+    if 'c_user' in response.cookies:
+        homepage_resp = session.get('https://developers.facebook.com/tools/explorer/')
+        return homepage_resp.text.split('},{"accessToken":"')[1].split('"')[0]
+    else:
+        return None
+
+
 def login():
-    global token
     global driver
     driver.get('https://www.facebook.com/')
 
@@ -26,8 +52,6 @@ def login():
     driver.find_element_by_id("loginbutton").click()
     time.sleep(1)
 
-    driver.get('https://www.facebook.com/me')
-    token = driver.page_source.split('access_token:"')[1].split('",')[0]
 
 
 def check_hashtag(text):
@@ -41,6 +65,7 @@ def check_hashtag(text):
 
 def pending_posts():
     global driver
+    global members_sent
     driver.get(config.GROUP_URL+'pending/')
 
     members_warning_hashtag = []
@@ -57,26 +82,16 @@ def pending_posts():
             pass
         else:
             members_warning_hashtag.append(pendings[index].find_elements_by_tag_name('a')[3].get_attribute('href').split('?')[0])
-    members_warning_hashtag = list(set(members_warning_hashtag))
-    #print members_warning_hashtag
-    driver.get('https://www.messenger.com/')
-    time.sleep(3)
-    try:
-        driver.find_element_by_id("email").send_keys(config.USERNAME)
-        driver.find_element_by_id("pass").send_keys(config.PASSWORD)
-        driver.find_element_by_id("loginbutton").click()
-        time.sleep(1)
-    except:
-        driver.find_element_by_tag_name('button').click()
 
-    for member in members_warning_hashtag:
-        try:
-            driver.get(member.replace('www.facebook.com', 'www.messenger.com/t'))
-            time.sleep(3)
-            driver.find_element_by_xpath("//div[@contenteditable='true']").send_keys(config.HASHTAGS_MESSAGE + Keys.ENTER)
-            time.sleep(3)
-        except:
-            pass
+    member_ids = map(lambda url: get_user_id(url), list(set(members_warning_hashtag)))
+
+    print member_ids
+
+    for member_id in member_ids:
+        if member_id not in members_sent:
+            client.sendMessage(config.HASHTAGS_MESSAGE, thread_id=member_id, thread_type=ThreadType.USER)
+            members_sent.append(member_id)
+            print 'sent to ' + member_id
 
 
 def pending_members():
@@ -100,7 +115,7 @@ def get_feed_ids(url=None):
         else:
             return map(lambda x: x['id'],res['data'])+get_feed_ids(res['paging']['next'])
     except:
-        login()
+        token = get_token(config.USERNAME, config.PASSWORD)
 
 
 def get_comments_of_feed(feed_id, url=None):
@@ -141,25 +156,33 @@ def delete_comment(comment_id):
     pass
 
 
-
-
-def main():
+def manage():
     global driver
     try:
         pending_members()
     except:
         pass
-
-    pending_posts()
+    try:
+        pending_posts()
+    except:
+        pass
 
     for feed_id in get_feed_ids():
         get_comments_of_feed(feed_id)
 
 
-login()
-main()
+def main():
+    global token
+    try:
+        token = get_token()
+        login()
+        schedule.every(3).minutes.do(manage)
+        while True:
+            schedule.run_pending()
+            time.sleep(1)
+    except:
+        print 'Please check your network'
+        time.sleep(10*60)
+        main()
 
-# schedule.every(3).minutes.do(main)
-# while True:
-#     schedule.run_pending()
-#     time.sleep(1)
+main()
