@@ -115,7 +115,7 @@ def get_feed_ids(url=None):
         else:
             return map(lambda x: x['id'],res['data'])+get_feed_ids(res['paging']['next'])
     except:
-        token = get_token(config.USERNAME, config.PASSWORD)
+        token = get_token()
 
 
 def get_comments_of_feed(feed_id, url=None):
