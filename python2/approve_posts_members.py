@@ -123,9 +123,11 @@ def get_comments_of_feed(feed_id, url=None):
     global driver
     if url is None:
         url = config.GRAPH_URL+feed_id+'?fields=comments'+'&access_token='+token
-    res = requests.get(url).json()['comments']
+    print url
+
+    res = requests.get(url).json()
     try:
-        for data in res['data']:
+        for data in res['comments']['data']:
             for word in config.DELETE_WORDS:
                 if word in data['message'].lower() or data['message'] == '.':# Delete comment
                     try:
@@ -175,13 +177,15 @@ def main():
     global token
     try:
         token = get_token()
+        print 'Token: '+token
         login()
+        manage()
         schedule.every(3).minutes.do(manage)
         while True:
             schedule.run_pending()
             time.sleep(1)
-    except:
-        print 'Please check your network'
+    except Exception as e:
+        print 'Exception '+ str(e)
         time.sleep(10*60)
         main()
 
