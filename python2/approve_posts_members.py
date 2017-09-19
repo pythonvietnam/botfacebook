@@ -157,9 +157,9 @@ def main():
 
 
 login()
-main()
+# main()
 
-# schedule.every(3).minutes.do(main)
-# while True:
-#     schedule.run_pending()
-#     time.sleep(1)
+schedule.every(3).minutes.do(main)
+while True:
+    schedule.run_pending()
+    time.sleep(1)
